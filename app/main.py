@@ -51,4 +51,4 @@ async def consulta_maquina1():
 
 def format_pulses(valor: float) -> str:
     """Formatação para 4 dígitos"""
-    return f"{int(valor):04d}" if valor > 0 else "0000"git add railway.json
+    return f"{int(valor):04d}" if valor > 0 else "0000"git add railway.jsonuvicorn app.main:app
