@@ -29,7 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/rota-recebimento")
+@app.post("/rota-recebimento")  
+
+
 async def receber_pix(request: Request):
     global valor_do_pix, valor_pix_maquina2
     
@@ -55,7 +57,6 @@ async def receber_pix(request: Request):
             valor_pix_maquina2 = valor
 
         return {"status": "ok"}
-
     except Exception as e:
         print("Erro:", str(e))
         raise HTTPException(status_code=400, detail=str(e))
