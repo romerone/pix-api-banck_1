@@ -1,16 +1,5 @@
 {
-    "name": "pix-api-python",
-    "version": "1.0.0",
-    "description": "API para integração PIX com ESP8266",
     "scripts": {
-      "start": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "keywords": [],
-    "author": "Seu Nome",
-    "license": "MIT",
-    "engines": {
-      "node": ">=16.0.0"
-    },
-    "dependencies": {}
+      "start": "pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    }
   }
