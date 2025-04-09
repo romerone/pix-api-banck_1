@@ -3,7 +3,9 @@
     "builder": "nixpacks",
     "config": {
       "language": "python",
-      "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port 5001"
+      "pythonVersion": "3.10",
+      "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+      "installCommand": "pip install -r requirements.txt"
     }
   }
 }
