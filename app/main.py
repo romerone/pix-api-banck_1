@@ -29,6 +29,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+#######################################
+# NOVA ROTA ADICIONADA AQUI (RECOMENDADO)
+@app.get("/")
+def home():
+    return {
+        "message": "API PIX Online", 
+        "endpoints": {
+            "receber_pix": "POST /rota-recebimento",
+            "consulta": "GET /consulta-Maquina01"
+        },
+        "docs": "/docs"  # Link para Swagger UI automático
+    }
+#######################################
+
+
 @app.post("/rota-recebimento")
 async def receber_pix(request: Request):
     global valor_do_pix, valor_pix_maquina2
