@@ -1,0 +1,14 @@
+# Adicione este arquivo 'nixpacks.toml' na raiz do projeto:
+[phases.setup]
+nixPkgs = ["python39"]
+
+[phases.install]
+commands = [
+  "pip install -r requirements.txt"
+]
+
+[phases.build]
+commands = []
+
+[start]
+command = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
