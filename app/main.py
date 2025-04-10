@@ -62,7 +62,7 @@ async def receber_pix(request: Request):
             valor = float(body["pix"][0]["valor"])
             txid = body["pix"][0]["txid"]
 
-            if txid == "70dcb59b94eac9ccbm01":
+            if txid == "65a8cdcb59b54eac9m01":
                 valor_do_pix = valor
                 print(f"Crédito atualizado (Máquina 1): R$ {valor}")
             elif txid == "flaksdfjaskldfj":
@@ -82,7 +82,7 @@ def consulta_maquina1():
     valor_do_pix = 0  # Zera após consulta
     return {"retorno": pulsos}
 
-@app.get("/consulta-rafael-mac02-lojaFulanoDeTal")
+@app.get("/consulta-Maquina02")
 def consulta_maquina2():
     global valor_pix_maquina2
     pulsos = format_pulses(valor_pix_maquina2)
