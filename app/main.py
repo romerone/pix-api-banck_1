@@ -45,7 +45,7 @@ def home():
 #######################################
 
 
-@app.post("/rota-recebimento")
+@app.post("/rota-recebimento/pix")
 async def receber_pix(request: Request):
     global valor_do_pix, valor_pix_maquina2
     
