@@ -2,26 +2,31 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+from supabase import create_client, Client
 import os
 
-# Variáveis globais PERSISTENTES
+# Carrega variáveis de ambiente
+load_dotenv()
+
+# Supabase config
+SUPABASE_URL = "https://mgvzikxtfmaoaozgtzyh.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ndnppa3h0Zm1hb2Fvemd0enloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0MTMxMTAsImV4cCI6MjA1OTk4OTExMH0.Tadv7KO68vy0SKgr8OyaP9KRjTB9G1yRmLDc5nIjlg8"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Variáveis globais persistentes
 valor_do_pix = 0
 valor_pix_maquina2 = 0
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Garante que as variáveis sejam mantidas entre requisições"""
     global valor_do_pix, valor_pix_maquina2
-    valor_do_pix = 0  # Inicializa ao iniciar o servidor
+    valor_do_pix = 0
     valor_pix_maquina2 = 0
     yield
-    # Limpa ao encerrar (opcional)
 
-load_dotenv()
+app = FastAPI(lifespan=lifespan)
 
-app = FastAPI(lifespan=lifespan)  # Habilita o gerenciamento de estado
-
-# CORS (ajuste os origens em produção!)
+# Libera CORS (ajuste para domínios específicos em produção)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,45 +34,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-#######################################
-# NOVA ROTA ADICIONADA AQUI (RECOMENDADO)
 @app.get("/")
 def home():
     return {
-        "message": "API PIX Online", 
+        "message": "API PIX Online",
         "endpoints": {
-            "receber_pix": "POST /rota-recebimento",
+            "receber_pix": "POST /rota-recebimento/pix",
             "consulta": "GET /consulta-Maquina01"
         },
-        "docs": "/docs"  # Link para Swagger UI automático
+        "docs": "/docs"
     }
-#######################################
-
 
 @app.post("/rota-recebimento/pix")
 async def receber_pix(request: Request):
     global valor_do_pix, valor_pix_maquina2
     
     try:
-        # Verificação de IP (compatível com Render/Heroku)
-        client_ip = request.headers.get('x-forwarded-for', request.client.host)
-       # if client_ip != os.getenv("ALLOWED_IP"):
-       #     raise HTTPException(status_code=401, detail="IP não autorizado")
+        # Verificação de IP opcional:
+        # client_ip = request.headers.get('x-forwarded-for', request.client.host)
+        # if client_ip != os.getenv("ALLOWED_IP"):
+        #     raise HTTPException(status_code=401, detail="IP não autorizado")
 
         body = await request.json()
-        print(f"Recebido:", body)  # Log para debug
+        print("Recebido:", body)
 
         if "pix" in body:
-            valor = float(body["pix"][0]["valor"])
-            txid = body["pix"][0]["txid"]
+            pix_data = body["pix"][0]
+            valor = float(pix_data["valor"])
+            txid = pix_data["txid"]
+            remetente = pix_data.get("nomePagador", "Desconhecido")
 
+            # Determinar qual máquina
             if txid == "65a8cdcb59b54eac9m01":
                 valor_do_pix = valor
+                maquina = "maquina01"
                 print(f"Crédito atualizado (Máquina 1): R$ {valor}")
             elif txid == "flaksdfjaskldfj":
                 valor_pix_maquina2 = valor
+                maquina = "maquina02"
                 print(f"Crédito atualizado (Máquina 2): R$ {valor}")
+            else:
+                maquina = "desconhecida"
+
+            # Inserir no Supabase
+            supabase.table("transacoes_pix").insert({
+                "valor": valor,
+                "remetente": remetente,
+                "txid": txid,
+                "maquina": maquina,
+                "data": None  # Supabase pode preencher automaticamente se configurado
+            }).execute()
 
         return {"status": "ok"}
 
@@ -79,7 +95,7 @@ async def receber_pix(request: Request):
 def consulta_maquina1():
     global valor_do_pix
     pulsos = format_pulses(valor_do_pix)
-    valor_do_pix = 0  # Zera após consulta
+    valor_do_pix = 0
     return {"retorno": pulsos}
 
 @app.get("/consulta-Maquina02")
@@ -90,7 +106,7 @@ def consulta_maquina2():
     return {"retorno": pulsos}
 
 def format_pulses(valor: float, ticket: float = 1.0) -> str:
-    """Formata o valor para 4 dígitos (ex: 5 → '0005')"""
+    """Formata o valor em múltiplos de R$1, com 4 dígitos (ex: '0005')"""
     if valor > 0 and valor >= ticket:
         creditos = int(valor // ticket)
         return f"{creditos:04d}"
