@@ -62,7 +62,10 @@ async def receber_pix(request: Request):
             pix_data = body["pix"][0]
             valor = float(pix_data["valor"])
             txid = pix_data["txid"]
-            remetente = pix_data.get("nomePagador", "Desconhecido")
+           # remetente = pix_data.get("nomePagador", "Desconhecido")
+
+            # CORREÇÃO AQUI - Acessando o nome do pagador corretamente
+            remetente = pix_data.get("gnExtras", {}).get("pagador", {}).get("nome", "Desconhecido")
 
             # Determinar qual máquina
             if txid == "65a8cdcb59b54eac9m01":
@@ -85,6 +88,7 @@ async def receber_pix(request: Request):
                 "data": None  # Supabase pode preencher automaticamente se configurado
             }).execute()
 
+            
         return {"status": "ok"}
 
     except Exception as e:
