@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from datetime import datetime
+import pytz
 import os
 
 # Carrega variáveis de ambiente
@@ -48,13 +50,8 @@ def home():
 @app.post("/rota-recebimento/pix")
 async def receber_pix(request: Request):
     global valor_do_pix, valor_pix_maquina2
-    
-    try:
-        # Verificação de IP opcional:
-        # client_ip = request.headers.get('x-forwarded-for', request.client.host)
-        # if client_ip != os.getenv("ALLOWED_IP"):
-        #     raise HTTPException(status_code=401, detail="IP não autorizado")
 
+    try:
         body = await request.json()
         print("Recebido:", body)
 
@@ -62,12 +59,11 @@ async def receber_pix(request: Request):
             pix_data = body["pix"][0]
             valor = float(pix_data["valor"])
             txid = pix_data["txid"]
-           # remetente = pix_data.get("nomePagador", "Desconhecido")
 
-            # CORREÇÃO AQUI - Acessando o nome do pagador corretamente
+            # Acessa o nome do pagador
             remetente = pix_data.get("gnExtras", {}).get("pagador", {}).get("nome", "Desconhecido")
 
-            # Determinar qual máquina
+            # Determina a máquina
             if txid == "65a8cdcb59b54eac9m01":
                 valor_do_pix = valor
                 maquina = "maquina01"
@@ -79,16 +75,18 @@ async def receber_pix(request: Request):
             else:
                 maquina = "desconhecida"
 
-            # Inserir no Supabase
+            # Data/hora local (Brasília)
+            horario_local = datetime.now(pytz.timezone("America/Sao_Paulo")).isoformat()
+
+            # Insere no Supabase
             supabase.table("transacoes_pix").insert({
                 "valor": valor,
                 "remetente": remetente,
                 "txid": txid,
                 "maquina": maquina,
-                "data": None  # Supabase pode preencher automaticamente se configurado
+                "data": horario_local
             }).execute()
 
-            
         return {"status": "ok"}
 
     except Exception as e:
