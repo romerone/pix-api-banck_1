@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pix-api
+    runtime: python
+    buildCommand: |
+      pip install --upgrade pip && \
+      pip install -r requirements.txt
+    startCommand: |
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 30
+    envVars:
+      - key: PORT
+        value: 5001  # Mesma porta do seu código
+      - key: PREVENT_IDLE
+        value: true  # Evita que o serviço "durma"
+    healthCheckPath: /health  # Opcional (crie este endpoint)
