@@ -77,7 +77,7 @@ async def receber_pix(request: Request):
             else:
                 maquina = "desconhecida"
 
-            # Data/hora local (Brasília)
+            # Data/hora local           (Brasília)
             horario_local = datetime.now(pytz.timezone("America/Sao_Paulo")).isoformat()
 
             # Insere no Supabase
